@@ -566,27 +566,6 @@
       inner + (opts.help ? '<div class="help">' + opts.help + '</div>' : '') + '</div>';
   }
 
-  function compressCover(file, done) {
-    if (!file || !/^image\//i.test(file.type)) { toast('请选择图片文件', { error: true }); return; }
-    var reader = new FileReader();
-    reader.onload = function () {
-      var img = new Image();
-      img.onload = function () {
-        var maxW = 800, maxH = 1100;
-        var scale = Math.min(1, maxW / img.width, maxH / img.height);
-        var canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(img.width * scale));
-        canvas.height = Math.max(1, Math.round(img.height * scale));
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        done(canvas.toDataURL('image/jpeg', 0.82));
-      };
-      img.onerror = function () { toast('封面图片读取失败', { error: true }); };
-      img.src = reader.result;
-    };
-    reader.onerror = function () { toast('封面图片读取失败', { error: true }); };
-    reader.readAsDataURL(file);
-  }
-
   function openBookModal(id, preset) {
     activeBookId = id || '';
     var b = id ? Store.get(id) : null;
@@ -603,9 +582,8 @@
 
     html += '<div class="modal-body"><form id="book-form" class="form-grid" autocomplete="off">' +
       field('书名 <span class="req">*</span>', '<input name="title" value="' + esc(b.title) + '" placeholder="例如：平凡的世界">', { full: false }) +
-      field('封面', '<div class="cover-input"><div id="cover-preview">' + coverImg(b, 'form-cover') + '</div><div class="cover-actions"><label class="btn btn-soft btn-sm camera-label">📷 拍照/选择封面<input id="cover-input" type="file" accept="image/*" capture="environment" hidden></label><button type="button" class="btn btn-ghost btn-sm" data-action="remove-cover">移除封面</button></div><div class="help">手机可直接调用相机拍摄书封面；图片会压缩后保存在本机。</div></div>', { full: true }) +
-      field('作者', '<input name="author" value="' + esc(b.author) + '" list="dl-authors" placeholder="例如：路遥">') +
-      field('出版社', '<input name="publisher" value="' + esc(b.publisher) + '" list="dl-publishers" placeholder="例如：北京十月文艺出版社">') +
+      field('作者', '<input name="author" value="' + esc(b.author) + '" placeholder="例如：路遥" autocomplete="off">') +
+      field('出版社', '<input name="publisher" value="' + esc(b.publisher) + '" placeholder="例如：北京十月文艺出版社" autocomplete="off">') +
       field('出版时间', '<input name="pubdate" value="' + esc(b.pubdate) + '" placeholder="2019 或 2019-05">') +
       field('类别', '<select name="category">' + cats.map(function (c) {
         return '<option value="' + esc(c) + '"' + (b.category === c ? ' selected' : '') + '>' + esc(c) + '</option>';
@@ -634,23 +612,9 @@
     openModal(html, function (root) {
       var form = $('#book-form', root);
 
-      var coverInput = root.querySelector('#cover-input');
-      if (coverInput) coverInput.addEventListener('change', function () {
-        var file = coverInput.files && coverInput.files[0];
-        if (!file) return;
-        compressCover(file, function (dataUrl) {
-          var preview = root.querySelector('#cover-preview');
-          if (preview) preview.innerHTML = coverImg({ title: b.title, cover: dataUrl }, 'form-cover');
-          b.cover = dataUrl;
-          if ($('#book-form')) $('#book-form').dataset.coverRemoved = '0';
-        });
-      });
-
       // datalists
       var dl = document.createElement('div');
       dl.innerHTML =
-        '<datalist id="dl-authors">' + Store.data.dict.authors.map(function (a) { return '<option value="' + esc(a) + '">'; }).join('') + '</datalist>' +
-        '<datalist id="dl-publishers">' + Store.data.dict.publishers.map(function (a) { return '<option value="' + esc(a) + '">'; }).join('') + '</datalist>' +
         '<datalist id="dl-channels">' + Store.data.dict.channels.map(function (a) { return '<option value="' + esc(a) + '">'; }).join('') + '</datalist>' +
         '<datalist id="dl-tags"></datalist>';
       form.appendChild(dl);
@@ -692,11 +656,10 @@
     var form = $('#book-form', root);
     var fields = {};
     ['title', 'author', 'publisher', 'pubdate', 'category', 'tag', 'language',
-      'translator', 'channel', 'acquired', 'note', 'cover'].forEach(function (k) {
+      'translator', 'channel', 'acquired', 'note'].forEach(function (k) {
         fields[k] = form[k] ? form[k].value : '';
       });
     fields.copies = form.copies ? form.copies.value : 1;
-    if (form.dataset.coverRemoved === '1') fields.cover = '';
 
     var errors = Store.validate(fields);
     var box = root.querySelector('#form-error');
@@ -915,12 +878,7 @@
         });
         break;
       }
-      case 'remove-cover': {
-        var cp = $('#cover-preview'); if (cp) cp.innerHTML = coverImg({ title: '封面', cover: '' }, 'form-cover');
-        var ci = $('#cover-input'); if (ci) ci.value = '';
-        if ($('#book-form')) $('#book-form').dataset.coverRemoved = '1';
-        break;
-      }
+
       case 'submit-book': {
         var modal = $('#modal-root .modal');
         if (modal) submitBook(modal, activeBookId);
