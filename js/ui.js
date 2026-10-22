@@ -582,8 +582,8 @@
 
     html += '<div class="modal-body"><form id="book-form" class="form-grid" autocomplete="off">' +
       field('书名 <span class="req">*</span>', '<input name="title" value="' + esc(b.title) + '" placeholder="例如：平凡的世界">', { full: false }) +
-      field('作者', '<input name="author" value="' + esc(b.author) + '" placeholder="例如：路遥" autocomplete="off">') +
-      field('出版社', '<input name="publisher" value="' + esc(b.publisher) + '" placeholder="例如：北京十月文艺出版社" autocomplete="off">') +
+      field('作者', '<input name="author" value="' + esc(b.author) + '" placeholder="例如：路遥" autocomplete="new-password" autocorrect="off" autocapitalize="words" spellcheck="false">') +
+      field('出版社', '<input name="publisher" value="' + esc(b.publisher) + '" placeholder="例如：北京十月文艺出版社" autocomplete="new-password" autocorrect="off" autocapitalize="words" spellcheck="false">') +
       field('出版时间', '<input name="pubdate" value="' + esc(b.pubdate) + '" placeholder="2019 或 2019-05">') +
       field('类别', '<select name="category">' + cats.map(function (c) {
         return '<option value="' + esc(c) + '"' + (b.category === c ? ' selected' : '') + '>' + esc(c) + '</option>';
